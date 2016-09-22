@@ -42,12 +42,13 @@ open class Interpolate {
     fileprivate var targetProgress: CGFloat = 0.0
     fileprivate var apply: ((Interpolatable) -> ())?
     fileprivate var displayLink: CADisplayLink?
+    fileprivate var startTimestamp: TimeInterval = 0
     
     // Animation completion handler, called when animate function stops.
     fileprivate var animationCompletion:(()->())?
     
     //MARK: Lifecycle
-    
+
 
     /**
      Initialises an Interpolate object.
@@ -83,8 +84,8 @@ open class Interpolate {
         let values = [from, to]
         self.init(values: values, function: function, apply: apply)
     }
-
-
+    
+    
     
     /**
      Invalidates the apply function
@@ -92,7 +93,7 @@ open class Interpolate {
     open func invalidate() {
         apply = nil
     }
-
+    
     //MARK: Animation
     
     /**
@@ -143,7 +144,7 @@ open class Interpolate {
         }
         return valuesDiffArray
     }
-
+    
     /**
      Adjusted progress using interpolation function.
      
@@ -159,11 +160,18 @@ open class Interpolate {
      Next function used by animation(). Increments progress based on the duration.
      */
     @objc fileprivate func next() {
-        let direction: CGFloat = (targetProgress > progress) ? 1.0 : -1.0
-        progress += 1/(self.duration*60)*direction
-        if (direction > 0 && progress >= targetProgress) || (direction < 0 && progress <= targetProgress) {
-            progress = targetProgress
-            stopAnimation()
+        guard let displayLink = displayLink else { return }
+        if startTimestamp > 0 {
+            let timeDiff = CGFloat(displayLink.timestamp - startTimestamp)
+            progress = timeDiff / self.duration
+            let direction: CGFloat = (targetProgress > progress) ? 1.0 : -1.0
+            //        progress += 1/(self.duration*60)*direction
+            if (direction > 0 && progress >= targetProgress) || (direction < 0 && progress <= targetProgress) {
+                progress = targetProgress
+                stopAnimation()
+            }
+        } else {
+            startTimestamp = displayLink.timestamp
         }
     }
     
