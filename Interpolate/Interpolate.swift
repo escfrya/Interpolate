@@ -91,6 +91,7 @@ open class Interpolate {
      Invalidates the apply function
      */
     open func invalidate() {
+        displayLink?.invalidate()
         apply = nil
     }
     
